@@ -1,8 +1,17 @@
 <script setup>
   import { reactive } from 'vue'
+  import { ref } from 'vue'
+  import { computed } from 'vue'
+  import { onMounted } from 'vue'
+
+  const isDesktop = ref(undefined)  
+  onMounted(()=> { 
+    isDesktop.value = window.screen.width / window.screen.height >= 1 ? true : false
+  })
   const scr = reactive({
     width: window.screen.width,
     height: window.screen.height,
+    WHratio: window.screen.width/window.screen.height,
     availWidth: window.screen.availWidth,
     availHeight: window.screen.availHeight,
     innerWidth: window.innerWidth,
@@ -21,6 +30,7 @@
   window.addEventListener('resize', ()=> {
     scr.width = window.screen.width
     scr.height = window.screen.height
+    scr.WHratio = window.screen.width/window.screen.height
     scr.availWidth = window.screen.availWidth
     scr.availHeight = window.screen.availHeight
     scr.innerWidth = window.innerWidth
@@ -36,6 +46,23 @@
     scr.vv_scale = visualViewport.scale.toFixed(2)
     
   })
+
+  const W_hardwareResolution = computed(()=> {  return (scr.width * devicePixelRatio).toFixed(2) })
+  const H_hardwareResolution = computed(()=> {  return (scr.height * devicePixelRatio).toFixed(2) })
+  const formFactor = computed(()=> {
+    if(isDesktop.value) return 'Desktop | Laptop'
+    else {
+      if((scr['orientation.type'] == 'portrait-primary' || scr['orientation.type'] == 'portrait-secondary')) {
+        if(0.5 <= scr.WHratio && scr.WHratio < 1)  return 'Tablet'
+        else if(0 < scr.WHratio && scr.WHratio < 0.5) return 'Smartphones'
+      }
+      else if(scr['orientation.type'] == 'landscape-primary' || scr['orientation.type'] == 'landscape-secondary'){
+        if(0.5 <= scr.height/scr.width && scr.height/scr.width < 1)  return 'Tablet'
+        else if(0 < scr.height/scr.width && scr.height/scr.width < 0.5) return 'Smartphones'
+      }
+      else return 'unknown'
+    }
+  })
 </script>
 
 <style scoped>
@@ -45,11 +72,11 @@ td,th {
 </style>
 
 <template>
-  <div class="w-full h-auto grid grid-cols-1 md:grid-cols-2 gap-4 place-items-center">
+  <div class="p-2 w-full h-auto grid grid-cols-1 md:grid-cols-2 gap-4 place-items-start">
     <p class="sm:hidden"> *rotate to see difference </p>
     <div class="w-full h-full border p-4 rounded-lg bg-[var(--color-background-soft)]">      
       <table class="text-center w-full h-auto text-md font-light">
-        <caption class="font-bold">Width / Height</caption>
+        <caption class="font-bold">Width | Height (CSS perspective)</caption>
         <thead>
           <tr class="bg-[var(--color-background-mute)] [&>th]:font-semibold">
             <th>Properties</th>
@@ -59,33 +86,70 @@ td,th {
         </thead>
         <tbody>
           <tr>
-            <td>screen.width , <br> height</td>
+            <td>screen.width, <br> height</td>
             <td>{{ scr.width }}</td>
             <td>{{ scr.height }}</td>
           </tr>
           <tr class="bg-[var(--color-background-mute)]">
-            <td>screen.availWidth , <br> availHeight</td>
+            <td>screen.availWidth, <br> availHeight</td>
             <td>{{ scr.availWidth }}</td>
             <td>{{ scr.availHeight }}</td>
           </tr>
           <tr>
-            <td>screen.outerWidth , <br> outerHeight</td>
+            <td>screen.outerWidth, <br> outerHeight</td>
             <td>{{scr.outerWidth}}</td>
             <td>{{ scr.outerHeight }}</td>
           </tr>
           <tr class="bg-[var(--color-background-mute)]">
-            <td>innerWidth , <br> innerHeight</td>
+            <td>innerWidth, <br> innerHeight</td>
             <td>{{ scr.innerWidth }}</td>
             <td>{{ scr.innerHeight }}</td>
           </tr>
           <tr>
-            <td>visualViewport.width , <br> outerHeight</td>
+            <td>visualViewport.width, <br> outerHeight</td>
             <td>{{scr.vv_width}}</td>
             <td>{{ scr.vv_height }}</td>
           </tr>
         </tbody>
       </table> 
     </div>
+
+    <div class="w-full h-auto border p-4 rounded-lg bg-[var(--color-background-soft)]">      
+      <table class="table text-center w-full h-auto text-md font-light">
+        <caption class="font-bold">Width | Height (hardware perspective)</caption>
+        <thead>
+          <tr class="bg-[var(--color-background-mute)] [&>th]:font-semibold">
+            <th>Resolution</th>
+            <th>W (px)</th>
+            <th>H (px)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              screen.width &#215; devicePixelRatio, <br> 
+              screen.height &#215; devicePixelRatio
+            </td>
+            <td>{{ W_hardwareResolution }}</td>
+            <td>{{ H_hardwareResolution }}</td>
+          </tr>
+          <tr class="bg-[var(--color-background-mute)]">
+            <td>Form factor</td>
+            <td colspan="2">{{ formFactor }}</td>
+          </tr>
+          <tr>
+            <td>orientation.type</td>
+            <td colspan="2"> {{ scr['orientation.type'] }} </td>
+          </tr>
+          <tr class="bg-[var(--color-background-mute)]">
+            <td>devicePixelRatio</td>
+            <td colspan="2"> {{ scr.devicePixelRatio }} </td>
+          </tr>
+
+        </tbody>
+      </table> 
+    </div>
+
 
     <div class="w-full h-full border p-4 rounded-lg bg-[var(--color-background-soft)]">
       <table class="h-auto text-center w-full text-md font-light">
@@ -98,20 +162,12 @@ td,th {
         </thead>
         <tbody>
           <tr>
-            <td>orientation.type</td>
-            <td> {{ scr['orientation.type'] }} </td>
-          </tr>
-          <tr class="bg-[var(--color-background-mute)]">
-            <td>colorDepth</td>
-            <td> {{ scr.colorDepth }} </td>
-          </tr>
-          <tr>
             <td>pixelDepth</td>
             <td> {{ scr.pixelDepth }} </td>
           </tr>
           <tr class="bg-[var(--color-background-mute)]">
-            <td>devicePixelRatio</td>
-            <td> {{ scr.devicePixelRatio }} </td>
+            <td>colorDepth</td>
+            <td> {{ scr.colorDepth }} </td>
           </tr>
           <tr>
             <td>visualViewport.scale</td>
