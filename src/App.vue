@@ -106,7 +106,7 @@ td,th {
             <td>{{ scr.innerHeight }}</td>
           </tr>
           <tr>
-            <td>visualViewport.width, <br> outerHeight</td>
+            <td>visualViewport.width, <br> visualViewport.height</td>
             <td>{{scr.vv_width}}</td>
             <td>{{ scr.vv_height }}</td>
           </tr>
