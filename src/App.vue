@@ -1,13 +1,7 @@
 <script setup>
   import { reactive } from 'vue'
-  import { ref } from 'vue'
   import { computed } from 'vue'
-  import { onMounted } from 'vue'
 
-  const isDesktop = ref(undefined)  
-  onMounted(()=> { 
-    isDesktop.value = window.screen.width / window.screen.height >= 1 ? true : false
-  })
   const scr = reactive({
     width: window.screen.width,
     height: window.screen.height,
@@ -44,24 +38,34 @@
     scr.vv_width = visualViewport.width.toFixed(0)
     scr.vv_height = visualViewport.height.toFixed(0)
     scr.vv_scale = visualViewport.scale.toFixed(2)
-    
   })
-
   const W_hardwareResolution = computed(()=> {  return (scr.width * devicePixelRatio).toFixed(2) })
   const H_hardwareResolution = computed(()=> {  return (scr.height * devicePixelRatio).toFixed(2) })
+
   const formFactor = computed(()=> {
-    if(isDesktop.value) return 'Desktop | Laptop'
-    else {
-      if((scr['orientation.type'] == 'portrait-primary' || scr['orientation.type'] == 'portrait-secondary')) {
-        if(0.5 <= scr.WHratio && scr.WHratio < 1)  return 'Tablet'
-        else if(0 < scr.WHratio && scr.WHratio < 0.5) return 'Smartphones'
+    if(scr['orientation.type']=='portrait-primary' || scr['orientation.type']=='portrait-secondary') {
+      let ratio = window.screen.width / window.screen.height
+      if(window.screen.height < 1024) {     // entering hand-held devices
+        if      (ratio < 0.5) return 'Smartphone'
+        else if (0.5 <= ratio && ratio < 1) return 'Tablet'
+        else return 'unknown1'
       }
-      else if(scr['orientation.type'] == 'landscape-primary' || scr['orientation.type'] == 'landscape-secondary'){
-        if(0.5 <= scr.height/scr.width && scr.height/scr.width < 1)  return 'Tablet'
-        else if(0 < scr.height/scr.width && scr.height/scr.width < 0.5) return 'Smartphones'
+      else {    // if height > 1024px in portrait i.e: vertical LED screen
+        return 'Desktop|Laptop'
       }
-      else return 'unknown'
     }
+    else if(scr['orientation.type']=='landscape-primary' || scr['orientation.type']=='landscape-secondary') {
+      if(window.screen.width < 1024) {
+        let ratio = window.screen.height / window.screen.width
+        if      (ratio < 0.5) return 'Smartphone'
+        else if (0.5 <= ratio && ratio < 1) return 'Tablet'
+        else return 'unknown2'
+      }
+      else {    // if width > 1024px in landscape i.e: laptops or normal horizontal desktop screens 
+        return 'Desktop|Laptop'
+      }
+    }
+    else return 'unknown3'
   })
 </script>
 
@@ -73,7 +77,7 @@ td,th {
 
 <template>
   <div class="p-2 w-full h-auto grid grid-cols-1 md:grid-cols-2 gap-4 place-items-start">
-    <p class="sm:hidden"> *rotate to see difference </p>
+    <p class="sm:hidden"> *rotate to see difference</p>
     <div class="w-full h-full border p-4 rounded-lg bg-[var(--color-background-soft)]">      
       <table class="text-center w-full h-auto text-md font-light">
         <caption class="font-bold">Width | Height (CSS perspective)</caption>
