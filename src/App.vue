@@ -22,6 +22,7 @@
   })
 
   window.addEventListener('resize', ()=> {
+    console.log("window.addEventListener('resize', ()=> {})");
     scr.width = window.screen.width
     scr.height = window.screen.height
     scr.WHratio = window.screen.width/window.screen.height
